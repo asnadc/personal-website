@@ -31,11 +31,6 @@
 
         body {
             font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", "Noto Sans", "Liberation Sans", Arial, sans-serif;
-
-            background-color: var(--bg-fallback);
-            background: linear-gradient(135deg, #00f2ff 0%, #0066ff 100%);
-            background-attachment: fixed;
-
             display: flex;
             align-items: center;
             justify-content: center;
@@ -46,12 +41,24 @@
             -moz-osx-font-smoothing: grayscale;
         }
 
-        body::before {
-            content: "";
-            position: absolute;
-            top: 0; left: 0; right: 0; bottom: 0;
+        #backgroundCanvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: -2;
+            display: block;
+        }
+
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
             background-color: var(--overlay-color);
-            z-index: 0;
+            z-index: -1;
         }
 
         main {
@@ -116,6 +123,9 @@
 </head>
 <body>
 
+    <canvas id="backgroundCanvas"></canvas>
+    <div class="overlay"></div>
+
     <main>
         <h1>Andrea Sacco</h1>
         <p>
@@ -131,6 +141,98 @@
 
     <script>
         document.getElementById('year').textContent = new Date().getFullYear();
+
+        const canvasElement = document.getElementById('backgroundCanvas');
+        const glContext = canvasElement.getContext('webgl');
+        const mainProgram = glContext.createProgram();
+        let animationFrameHandle;
+
+        const fragmentSource = `
+        precision highp float;
+        uniform float uTime;
+        uniform vec2 uResolution;
+
+        float getDistance(vec3 currentPoint) {
+            vec3 originPoint = currentPoint;
+            float currentScale = 1.0;
+            for (int iteration = 0; iteration < 5; iteration++) {
+                currentPoint = 1.0 - abs(currentPoint - 1.0);
+                float iterationDistortion = 2.0 / clamp(dot(currentPoint, currentPoint), 0.3, 1.0);
+                currentPoint *= iterationDistortion; 
+                currentScale *= iterationDistortion;
+                currentPoint += originPoint;
+            }
+            return length(currentPoint) / currentScale - 0.001;
+        }
+
+        void main() {
+            vec2 screenCoords = (gl_FragCoord.xy - .5 * uResolution) / uResolution.y;
+            vec3 rayOrigin = vec3(0.5 * sin(uTime * .1), 0.5 * cos(uTime * .1), uTime);
+            vec3 rayDirection = normalize(vec3(screenCoords, 1.2));
+            vec3 rayPosition = rayOrigin;
+            
+            float surfaceDistance, totalTravelDist = 0.0;
+            for (int stepCount = 0; stepCount < 70; stepCount++) {
+                surfaceDistance = getDistance(rayPosition);
+                rayPosition += rayDirection * surfaceDistance;
+                totalTravelDist += surfaceDistance;
+                if (surfaceDistance < .001 || totalTravelDist > 15.) break;
+            }
+
+            float fogEffect = 1.0 / (1.0 + totalTravelDist * totalTravelDist * 0.1);
+            vec3 azureColor = vec3(0.0, 0.6, 1.0);
+            vec3 deepBlue = vec3(0.0, 0.05, 0.2);
+            
+            vec3 finalColor = mix(deepBlue, azureColor, fogEffect);
+            finalColor += azureColor * pow(fogEffect, 3.0);
+            
+            gl_FragColor = vec4(finalColor, 1.0);
+        }`;
+
+        const addShaderModule = (shaderType, shaderSource) => {
+            const shaderObject = glContext.createShader(shaderType);
+            glContext.shaderSource(shaderObject, shaderSource);
+            glContext.compileShader(shaderObject);
+            glContext.attachShader(mainProgram, shaderObject);
+        };
+
+        addShaderModule(glContext.VERTEX_SHADER, `attribute vec4 aVertexPos; void main(){gl_Position=aVertexPos;}`);
+        addShaderModule(glContext.FRAGMENT_SHADER, fragmentSource);
+        glContext.linkProgram(mainProgram);
+        glContext.useProgram(mainProgram);
+
+        glContext.bindBuffer(glContext.ARRAY_BUFFER, glContext.createBuffer());
+        glContext.bufferData(glContext.ARRAY_BUFFER, new Float32Array([-1,1,-1,-1,1,1,1,-1]), glContext.STATIC_DRAW);
+        
+        const positionLocation = glContext.getAttribLocation(mainProgram, 'aVertexPos');
+        glContext.enableVertexAttribArray(positionLocation);
+        glContext.vertexAttribPointer(positionLocation, 2, glContext.FLOAT, false, 0, 0);
+
+        const renderFrame = (currentTime) => {
+            if (document.hidden) return;
+
+            if (canvasElement.width !== window.innerWidth || canvasElement.height !== window.innerHeight) {
+                canvasElement.width = window.innerWidth;
+                canvasElement.height = window.innerHeight;
+                glContext.viewport(0, 0, canvasElement.width, canvasElement.height);
+            }
+            
+            glContext.uniform1f(glContext.getUniformLocation(mainProgram, 'uTime'), currentTime * 0.0006);
+            glContext.uniform2f(glContext.getUniformLocation(mainProgram, 'uResolution'), canvasElement.width, canvasElement.height);
+            
+            glContext.drawArrays(glContext.TRIANGLE_STRIP, 0, 4);
+            animationFrameHandle = requestAnimationFrame(renderFrame);
+        };
+
+        document.addEventListener("visibilitychange", () => {
+            if (document.hidden) {
+                cancelAnimationFrame(animationFrameHandle);
+            } else {
+                animationFrameHandle = requestAnimationFrame(renderFrame);
+            }
+        });
+
+        renderFrame(0);
     </script>
 
 </body>
