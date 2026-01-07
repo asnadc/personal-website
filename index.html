@@ -17,6 +17,7 @@
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' style='stop-color:%2300f2ff'/%3E%3Cstop offset='100%25' style='stop-color:%230066ff'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='64' height='64' fill='url(%23g)' rx='12'/%3E%3C/svg%3E" type="image/svg+xml">
 
     <style>
+        /* --bg-fallback is the color seen by bots or if WebGL is disabled */
         :root {
             --bg-fallback: #0fafff;
             --overlay-color: rgba(0, 0, 0, 0.4);
@@ -30,6 +31,7 @@
         }
 
         body {
+            /* system fonts for zero-latency text rendering */
             font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", "Noto Sans", "Liberation Sans", Arial, sans-serif;
             display: flex;
             align-items: center;
@@ -42,6 +44,11 @@
             overflow: hidden;
         }
 
+        /* layer stacking (z-index)
+           -2 WebGL canvas (background)
+           -1 overlay (contrast filter)
+            1 main content (foreground)
+        */
         #backgroundCanvas {
             position: fixed;
             top: 0;
@@ -112,6 +119,7 @@
             opacity: 0.7;
         }
 
+        /* animation intro */
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
@@ -142,58 +150,104 @@
     </main>
 
     <script>
+        /* update footer year */
         document.getElementById('year').textContent = new Date().getFullYear();
 
+        /* request GPU access with optimized flags */
         const canvasElement = document.getElementById('backgroundCanvas');
         const glContext = canvasElement.getContext('webgl', { antialias: false, depth: false });
 
         if (glContext) {
+            /* when bots or crawlers are detected WebGL is skipped to ensure performance */
             const isBot = /bot|googlebot|lighthouse|crawler|spider|robot|crawling/i.test(navigator.userAgent);
             const mainProgram = glContext.createProgram();
             let animationFrameHandle;
 
+            /* fragment shader (GLSL) visual effect */
             const fragmentSource = `
+            // set high precision for floating point calculations (essential for fractal detail)
             precision highp float;
-            uniform float uTime;
-            uniform vec2 uResolution;
 
+            // uniform passed from JavaScript
+            uniform float uTime;        // elapsed time for animation
+            uniform vec2 uResolution;   // canvas dimensions (width, height)
+
+            // signed distance function (sdf) 
+            // calculate the distance from a point in space to the fractal surface 
+            // use style iteration folding and scaling space
             float getDistance(vec3 currentPoint) {
                 vec3 originPoint = currentPoint;
                 float currentScale = 1.0;
+
+                // fractal iteration loop (5 iterations for performance balance)
                 for (int iteration = 0; iteration < 5; iteration++) {
+                    // box folding 
+                    // folds space linearly to create sharp geometric edges
                     currentPoint = 1.0 - abs(currentPoint - 1.0);
+
+                    // sphere folding 
+                    // invert space inside/outside a specific radius
                     float iterationDistortion = 2.0 / clamp(dot(currentPoint, currentPoint), 0.3, 1.0);
+
+                    // apply scaling and distortion to the point and scale factor
                     currentPoint *= iterationDistortion; 
                     currentScale *= iterationDistortion;
+
+                    // add original position to maintain structural coherence
                     currentPoint += originPoint;
                 }
+
+                // return distance estimation to point divided by total accumulated scale
                 return length(currentPoint) / currentScale - 0.001;
             }
 
             void main() {
+                // normalize screen coordinates center (0,0) and correct aspect ratio
                 vec2 screenCoords = (gl_FragCoord.xy - .5 * uResolution) / uResolution.y;
+
+                // camera setup 
+                // origin move in a spiral pattern circle on XY, forward on Z
                 vec3 rayOrigin = vec3(0.5 * sin(uTime * .1), 0.5 * cos(uTime * .1), uTime);
+                
+                // ray setup 
+                // direction based on screen pixel coordinates 
+                // 1.2 determines field of view (FOV)
                 vec3 rayDirection = normalize(vec3(screenCoords, 1.2));
                 vec3 rayPosition = rayOrigin;
 
+                // raymarching loop 
+                // marche the ray forward until it hits a surface or exceeds max distance
                 float surfaceDistance, totalTravelDist = 0.0;
+
                 for (int stepCount = 0; stepCount < 70; stepCount++) {
-                    surfaceDistance = getDistance(rayPosition);
-                    rayPosition += rayDirection * surfaceDistance;
-                    totalTravelDist += surfaceDistance;
+                    surfaceDistance = getDistance(rayPosition);     // check distance to fractal
+                    rayPosition += rayDirection * surfaceDistance;  // advance ray
+                    totalTravelDist += surfaceDistance;             // track total distance
+
+                    // break if close enough to surface (hit) or too far (miss)
                     if (surfaceDistance < .001 || totalTravelDist > 15.) break;
                 }
 
+                // calculate fog intensity based on distance (inverse square law approximation)
                 float fogEffect = 1.0 / (1.0 + totalTravelDist * totalTravelDist * 0.1);
-                vec3 azureColor = vec3(0.0, 0.6, 1.0);
-                vec3 deepBlue = vec3(0.0, 0.05, 0.2);
 
+                // define palette
+                vec3 azureColor = vec3(0.0, 0.6, 1.0);
+                vec3 deepBlue = vec3(0.0, 0.05, 0.2); // background/shadows
+
+                // mix colors based on fog (depth cues)
                 vec3 finalColor = mix(deepBlue, azureColor, fogEffect);
+
+                // add a glow effect for areas with high fog density
                 finalColor += azureColor * pow(fogEffect, 3.0);
 
+                // output final pixel color
                 gl_FragColor = vec4(finalColor, 1.0);
             }`;
 
+            /* shader compilation 
+               helper function to streamline the GPU program creation pipeline 
+               create object -> upload GLSL source -> compile to binary -> attach to program container */
             const addShaderModule = (shaderType, shaderSource) => {
                 const shaderObject = glContext.createShader(shaderType);
                 glContext.shaderSource(shaderObject, shaderSource);
@@ -201,45 +255,68 @@
                 glContext.attachShader(mainProgram, shaderObject);
             };
 
+            /* vertex shader 
+               pass the 2D coordinates (attribute) directly to the rasterizer */
             addShaderModule(glContext.VERTEX_SHADER, `attribute vec4 aVertexPos; void main(){gl_Position=aVertexPos;}`);
+            /* fragment shader 
+               the fractal defined */
             addShaderModule(glContext.FRAGMENT_SHADER, fragmentSource);
+            /* finalize the program (link) and tell the GPU to use it */
             glContext.linkProgram(mainProgram);
             glContext.useProgram(mainProgram);
 
+            /* geometry 
+               allocate memory on the GPU (buffer) for vertex data */
             glContext.bindBuffer(glContext.ARRAY_BUFFER, glContext.createBuffer());
+            /* upload raw binary data 
+               a triangle strip covering the full screen (clip space coordinates -1.0 to 1.0) */
             glContext.bufferData(glContext.ARRAY_BUFFER, new Float32Array([-1,1,-1,-1,1,1,1,-1]), glContext.STATIC_DRAW);
             
+            /* tell WebGL how to interpret the buffer data (2 floats per vertex, non-normalized) */
             const positionLocation = glContext.getAttribLocation(mainProgram, 'aVertexPos');
             glContext.enableVertexAttribArray(positionLocation);
             glContext.vertexAttribPointer(positionLocation, 2, glContext.FLOAT, false, 0, 0);
 
+            /* get references to uniforms (variables sent from CPU to GPU) */
             const uTimeLocation = glContext.getUniformLocation(mainProgram, 'uTime');
             const uResolutionLocation = glContext.getUniformLocation(mainProgram, 'uResolution');
 
             const renderFrame = (currentTime) => {
+                /* safety check if the document is hidden do not waste cycles */
                 if (document.hidden) return;
 
+                /* responsive resize handling checks if window size changed since last frame 
+                   and updates canvas internal resolution and WebGL Viewport to match 1:1 */
                 if (canvasElement.width !== window.innerWidth || canvasElement.height !== window.innerHeight) {
                     canvasElement.width = window.innerWidth;
                     canvasElement.height = window.innerHeight;
                     glContext.viewport(0, 0, canvasElement.width, canvasElement.height);
                 }
-                
+
+                /* update uniforms time (slowed down by 0.0006 factor) and resolution */
                 glContext.uniform1f(uTimeLocation, currentTime * 0.0006);
                 glContext.uniform2f(uResolutionLocation, canvasElement.width, canvasElement.height);
 
-                glContext.drawArrays(glContext.TRIANGLE_STRIP, 0, 4);
+                /* draw call renders 4 vertices as a triangle strip */
+                   glContext.drawArrays(glContext.TRIANGLE_STRIP, 0, 4);
+
+                /* start animation schedule the next frame (VSync synced) */
                 animationFrameHandle = requestAnimationFrame(renderFrame);
             };
 
             if (!isBot) {
+                /* ignite the engine and pass 0 as initial time */
                 renderFrame(0);
             } else {
+                /* fallback for bots paints a static background and exits 
+                   performance optimization renders a single solid color frame and stop */
                 glContext.clearColor(0.0, 0.05, 0.2, 1.0);
                 glContext.clear(glContext.COLOR_BUFFER_BIT);
             }
 
             document.addEventListener("visibilitychange", () => {
+                /* stop the render loop when the user switches tabs 
+                   hard stop when tab is backgrounded and restarts only if it's not a bot */
                 if (document.hidden) cancelAnimationFrame(animationFrameHandle);
                 else if (!isBot) animationFrameHandle = requestAnimationFrame(renderFrame);
             });
