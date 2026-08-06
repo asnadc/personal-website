@@ -1,170 +1,215 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
+  <head>
+    <meta charset="UTF-8" />
     <title>asnadc | Andrea Sacco | dev</title>
-    <meta name="description" content="Digital Hub of Andrea Sacco • Software Developer. Connect via official profiles: 'asnadc' on GitHub and 'andreasaccodev' on LinkedIn.">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta
+      name="description"
+      content="Digital Hub of Andrea Sacco • Software Developer. Connect via official profiles: 'asnadc' on Codeberg and 'andreasaccodev' on LinkedIn."
+    />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
 
     <link rel="canonical" href="https://asnadc.com" />
 
-    <meta property="og:type" content="website">
-    <meta property="og:url" content="https://asnadc.com/">
-    <meta property="og:title" content="asnadc | Andrea Sacco | dev">
-    <meta property="og:description" content="Digital Hub of Andrea Sacco • Software Developer.">
-    <meta property="og:locale" content="en_US">
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://asnadc.com/" />
+    <meta property="og:title" content="asnadc | Andrea Sacco | dev" />
+    <meta
+      property="og:description"
+      content="Digital Hub of Andrea Sacco • Software Developer."
+    />
+    <meta property="og:locale" content="en_US" />
 
-    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' style='stop-color:%2300f2ff'/%3E%3Cstop offset='100%25' style='stop-color:%230066ff'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='64' height='64' fill='url(%23g)' rx='12'/%3E%3C/svg%3E" type="image/svg+xml">
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' style='stop-color:%2300f2ff'/%3E%3Cstop offset='100%25' style='stop-color:%230066ff'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='64' height='64' fill='url(%23g)' rx='12'/%3E%3C/svg%3E"
+      type="image/svg+xml"
+    />
 
     <style>
-        /* --bg-fallback is the color seen by bots or if WebGL is disabled */
-        :root {
-            --bg-fallback: #0fafff;
-            --overlay-color: rgba(0, 0, 0, 0.4);
-            --text-main: #ffffff;
-        }
+      /* --bg-fallback is the color seen by bots or if WebGL is disabled */
+      :root {
+        --bg-fallback: #0fafff;
+        --overlay-color: rgba(0, 0, 0, 0.4);
+        --text-main: #ffffff;
+      }
 
-        html, body {
-            height: 100%;
-            margin: 0;
-            padding: 0;
-        }
+      html,
+      body {
+        height: 100%;
+        margin: 0;
+        padding: 0;
+      }
 
-        body {
-            /* system fonts for zero-latency text rendering */
-            font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", "Noto Sans", "Liberation Sans", Arial, sans-serif;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-            color: var(--text-main);
+      body {
+        /* system fonts for zero-latency text rendering */
+        font-family:
+          system-ui,
+          -apple-system,
+          "Segoe UI",
+          Roboto,
+          "Helvetica Neue",
+          "Noto Sans",
+          "Liberation Sans",
+          Arial,
+          sans-serif;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        color: var(--text-main);
 
-            -webkit-font-smoothing: antialiased;
-            -moz-osx-font-smoothing: grayscale;
-            overflow: hidden;
-        }
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        overflow: hidden;
+      }
 
-        /* layer stacking (z-index)
+      /* layer stacking (z-index)
            -2 WebGL canvas (background)
            -1 overlay (contrast filter)
             1 main content (foreground)
         */
-        #backgroundCanvas {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            z-index: -2;
-            display: block;
-            background-color: var(--bg-fallback);
-        }
+      #backgroundCanvas {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        z-index: -2;
+        display: block;
+        background-color: var(--bg-fallback);
+      }
 
-        .overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: var(--overlay-color);
-            z-index: -1;
-        }
+      .overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: var(--overlay-color);
+        z-index: -1;
+      }
 
-        main {
-            position: relative;
-            z-index: 1;
-            padding: 1.5rem;
-            max-width: 800px;
-            animation: fadeIn 0.8s ease-out;
-            will-change: transform, opacity;
-        }
+      main {
+        position: relative;
+        z-index: 1;
+        padding: 1.5rem;
+        max-width: 800px;
+        animation: fadeIn 0.8s ease-out;
+        will-change: transform, opacity;
+      }
 
+      h1 {
+        font-weight: 700;
+        margin: 0 0 0.5rem 0;
+        font-size: 2.5rem;
+        letter-spacing: -0.03em;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+      }
+
+      p {
+        font-size: 1.1rem;
+        margin: 0;
+        opacity: 0.95;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+        font-weight: 400;
+      }
+
+      a {
+        color: inherit;
+        text-decoration: none;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.4);
+        transition:
+          border-bottom-color 0.2s ease,
+          opacity 0.2s ease;
+        padding-bottom: 2px;
+      }
+
+      a:hover {
+        border-bottom-color: var(--text-main);
+        opacity: 1;
+      }
+
+      .separator {
+        margin: 0 0.5rem;
+        opacity: 0.6;
+      }
+
+      .copyright {
+        margin-top: 2rem;
+        font-size: 0.85rem;
+        opacity: 0.7;
+      }
+
+      /* animation intro */
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      @media (max-width: 600px) {
         h1 {
-            font-weight: 700;
-            margin: 0 0 0.5rem 0;
-            font-size: 2.5rem;
-            letter-spacing: -0.03em;
-            text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+          font-size: 2rem;
         }
-
         p {
-            font-size: 1.1rem;
-            margin: 0;
-            opacity: 0.95;
-            text-shadow: 0 1px 2px rgba(0,0,0,0.2);
-            font-weight: 400;
+          font-size: 1rem;
         }
-
-        a {
-            color: inherit;
-            text-decoration: none;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.4);
-            transition: border-bottom-color 0.2s ease, opacity 0.2s ease;
-            padding-bottom: 2px;
-        }
-
-        a:hover {
-            border-bottom-color: var(--text-main);
-            opacity: 1;
-        }
-
-        .separator {
-            margin: 0 0.5rem;
-            opacity: 0.6;
-        }
-
-        .copyright {
-            margin-top: 2rem;
-            font-size: 0.85rem;
-            opacity: 0.7;
-        }
-
-        /* animation intro */
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        @media (max-width: 600px) {
-            h1 { font-size: 2rem; }
-            p { font-size: 1rem; }
-        }
+      }
     </style>
-</head>
-<body>
-
+  </head>
+  <body>
     <canvas id="backgroundCanvas"></canvas>
     <div class="overlay"></div>
 
     <main>
-        <h1>Andrea Sacco</h1>
-        <p>
-            dev: <a href="https://www.github.com/asnadc" title="GitHub Profile">asnadc</a>
-            <span class="separator">|</span> 
-            alias: <a href="https://linkedin.com/in/andreasaccodev" title="LinkedIn Profile">andreasaccodev</a>
-        </p>
+      <h1>Andrea Sacco</h1>
+      <p>
+        dev:
+        <a href="https://codeberg.org/asnadc" title="Codeberg Profile"
+          >asnadc</a
+        >
+        <span class="separator">|</span>
+        alias:
+        <a
+          href="https://linkedin.com/in/andreasaccodev"
+          title="LinkedIn Profile"
+          >andreasaccodev</a
+        >
+      </p>
 
-        <div class="copyright">
-            &copy; <span id="year"></span> Andrea Sacco (asnadc)
-        </div>
+      <div class="copyright">
+        &copy; <span id="year"></span> Andrea Sacco (asnadc)
+      </div>
     </main>
 
     <script>
-        /* update footer year */
-        document.getElementById('year').textContent = new Date().getFullYear();
+      /* update footer year */
+      document.getElementById("year").textContent = new Date().getFullYear();
 
-        /* request GPU access with optimized flags */
-        const canvasElement = document.getElementById('backgroundCanvas');
-        const glContext = canvasElement.getContext('webgl', { antialias: false, depth: false });
+      /* request GPU access with optimized flags */
+      const canvasElement = document.getElementById("backgroundCanvas");
+      const glContext = canvasElement.getContext("webgl", {
+        antialias: false,
+        depth: false,
+      });
 
-        if (glContext) {
-            /* when bots or crawlers are detected WebGL is skipped to ensure performance */
-            const isBot = /bot|googlebot|lighthouse|crawler|spider|robot|crawling/i.test(navigator.userAgent);
-            const mainProgram = glContext.createProgram();
-            let animationFrameHandle;
+      if (glContext) {
+        /* when bots or crawlers are detected WebGL is skipped to ensure performance */
+        const isBot =
+          /bot|googlebot|lighthouse|crawler|spider|robot|crawling/i.test(
+            navigator.userAgent,
+          );
+        const mainProgram = glContext.createProgram();
+        let animationFrameHandle;
 
-            /* fragment shader (GLSL) visual effect */
-            const fragmentSource = `
+        /* fragment shader (GLSL) visual effect */
+        const fragmentSource = `
             // set high precision for floating point calculations (essential for fractal detail)
             precision highp float;
 
@@ -245,82 +290,113 @@
                 gl_FragColor = vec4(finalColor, 1.0);
             }`;
 
-            /* shader compilation 
+        /* shader compilation 
                helper function to streamline the GPU program creation pipeline 
                create object -> upload GLSL source -> compile to binary -> attach to program container */
-            const addShaderModule = (shaderType, shaderSource) => {
-                const shaderObject = glContext.createShader(shaderType);
-                glContext.shaderSource(shaderObject, shaderSource);
-                glContext.compileShader(shaderObject);
-                glContext.attachShader(mainProgram, shaderObject);
-            };
+        const addShaderModule = (shaderType, shaderSource) => {
+          const shaderObject = glContext.createShader(shaderType);
+          glContext.shaderSource(shaderObject, shaderSource);
+          glContext.compileShader(shaderObject);
+          glContext.attachShader(mainProgram, shaderObject);
+        };
 
-            /* vertex shader 
+        /* vertex shader 
                pass the 2D coordinates (attribute) directly to the rasterizer */
-            addShaderModule(glContext.VERTEX_SHADER, `attribute vec4 aVertexPos; void main(){gl_Position=aVertexPos;}`);
-            /* fragment shader 
+        addShaderModule(
+          glContext.VERTEX_SHADER,
+          `attribute vec4 aVertexPos; void main(){gl_Position=aVertexPos;}`,
+        );
+        /* fragment shader 
                the fractal defined */
-            addShaderModule(glContext.FRAGMENT_SHADER, fragmentSource);
-            /* finalize the program (link) and tell the GPU to use it */
-            glContext.linkProgram(mainProgram);
-            glContext.useProgram(mainProgram);
+        addShaderModule(glContext.FRAGMENT_SHADER, fragmentSource);
+        /* finalize the program (link) and tell the GPU to use it */
+        glContext.linkProgram(mainProgram);
+        glContext.useProgram(mainProgram);
 
-            /* geometry 
+        /* geometry 
                allocate memory on the GPU (buffer) for vertex data */
-            glContext.bindBuffer(glContext.ARRAY_BUFFER, glContext.createBuffer());
-            /* upload raw binary data 
+        glContext.bindBuffer(glContext.ARRAY_BUFFER, glContext.createBuffer());
+        /* upload raw binary data 
                a triangle strip covering the full screen (clip space coordinates -1.0 to 1.0) */
-            glContext.bufferData(glContext.ARRAY_BUFFER, new Float32Array([-1,1,-1,-1,1,1,1,-1]), glContext.STATIC_DRAW);
-            
-            /* tell WebGL how to interpret the buffer data (2 floats per vertex, non-normalized) */
-            const positionLocation = glContext.getAttribLocation(mainProgram, 'aVertexPos');
-            glContext.enableVertexAttribArray(positionLocation);
-            glContext.vertexAttribPointer(positionLocation, 2, glContext.FLOAT, false, 0, 0);
+        glContext.bufferData(
+          glContext.ARRAY_BUFFER,
+          new Float32Array([-1, 1, -1, -1, 1, 1, 1, -1]),
+          glContext.STATIC_DRAW,
+        );
 
-            /* get references to uniforms (variables sent from CPU to GPU) */
-            const uTimeLocation = glContext.getUniformLocation(mainProgram, 'uTime');
-            const uResolutionLocation = glContext.getUniformLocation(mainProgram, 'uResolution');
+        /* tell WebGL how to interpret the buffer data (2 floats per vertex, non-normalized) */
+        const positionLocation = glContext.getAttribLocation(
+          mainProgram,
+          "aVertexPos",
+        );
+        glContext.enableVertexAttribArray(positionLocation);
+        glContext.vertexAttribPointer(
+          positionLocation,
+          2,
+          glContext.FLOAT,
+          false,
+          0,
+          0,
+        );
 
-            const renderFrame = (currentTime) => {
-                /* safety check if the document is hidden do not waste cycles */
-                if (document.hidden) return;
+        /* get references to uniforms (variables sent from CPU to GPU) */
+        const uTimeLocation = glContext.getUniformLocation(
+          mainProgram,
+          "uTime",
+        );
+        const uResolutionLocation = glContext.getUniformLocation(
+          mainProgram,
+          "uResolution",
+        );
 
-                /* responsive resize handling checks if window size changed since last frame 
+        const renderFrame = (currentTime) => {
+          /* safety check if the document is hidden do not waste cycles */
+          if (document.hidden) return;
+
+          /* responsive resize handling checks if window size changed since last frame 
                    and updates canvas internal resolution and WebGL Viewport to match 1:1 */
-                if (canvasElement.width !== window.innerWidth || canvasElement.height !== window.innerHeight) {
-                    canvasElement.width = window.innerWidth;
-                    canvasElement.height = window.innerHeight;
-                    glContext.viewport(0, 0, canvasElement.width, canvasElement.height);
-                }
+          if (
+            canvasElement.width !== window.innerWidth ||
+            canvasElement.height !== window.innerHeight
+          ) {
+            canvasElement.width = window.innerWidth;
+            canvasElement.height = window.innerHeight;
+            glContext.viewport(0, 0, canvasElement.width, canvasElement.height);
+          }
 
-                /* update uniforms time (slowed down by 0.0006 factor) and resolution */
-                glContext.uniform1f(uTimeLocation, currentTime * 0.0006);
-                glContext.uniform2f(uResolutionLocation, canvasElement.width, canvasElement.height);
+          /* update uniforms time (slowed down by 0.0006 factor) and resolution */
+          glContext.uniform1f(uTimeLocation, currentTime * 0.0006);
+          glContext.uniform2f(
+            uResolutionLocation,
+            canvasElement.width,
+            canvasElement.height,
+          );
 
-                /* draw call renders 4 vertices as a triangle strip */
-                   glContext.drawArrays(glContext.TRIANGLE_STRIP, 0, 4);
+          /* draw call renders 4 vertices as a triangle strip */
+          glContext.drawArrays(glContext.TRIANGLE_STRIP, 0, 4);
 
-                /* start animation schedule the next frame (VSync synced) */
-                animationFrameHandle = requestAnimationFrame(renderFrame);
-            };
+          /* start animation schedule the next frame (VSync synced) */
+          animationFrameHandle = requestAnimationFrame(renderFrame);
+        };
 
-            if (!isBot) {
-                /* ignite the engine and pass 0 as initial time */
-                renderFrame(0);
-            } else {
-                /* fallback for bots paints a static background and exits 
+        if (!isBot) {
+          /* ignite the engine and pass 0 as initial time */
+          renderFrame(0);
+        } else {
+          /* fallback for bots paints a static background and exits 
                    performance optimization renders a single solid color frame and stop */
-                glContext.clearColor(0.0, 0.05, 0.2, 1.0);
-                glContext.clear(glContext.COLOR_BUFFER_BIT);
-            }
-
-            document.addEventListener("visibilitychange", () => {
-                /* stop the render loop when the user switches tabs 
-                   hard stop when tab is backgrounded and restarts only if it's not a bot */
-                if (document.hidden) cancelAnimationFrame(animationFrameHandle);
-                else if (!isBot) animationFrameHandle = requestAnimationFrame(renderFrame);
-            });
+          glContext.clearColor(0.0, 0.05, 0.2, 1.0);
+          glContext.clear(glContext.COLOR_BUFFER_BIT);
         }
+
+        document.addEventListener("visibilitychange", () => {
+          /* stop the render loop when the user switches tabs 
+                   hard stop when tab is backgrounded and restarts only if it's not a bot */
+          if (document.hidden) cancelAnimationFrame(animationFrameHandle);
+          else if (!isBot)
+            animationFrameHandle = requestAnimationFrame(renderFrame);
+        });
+      }
     </script>
-</body>
+  </body>
 </html>
